@@ -15,22 +15,30 @@ class SearchController extends Controller
         if ($platform === "github"){ // use enum
             $authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
             $endpoint = "https://api.github.com/search/issues";
+            $user = "birisic";
+            $repository = "BooproAssignment";
             $headers = [
                 "Accept" => "application/vnd.github.text-match+json",
                 "Authorization" => "Bearer $authorizationToken"
             ];
 
             $queryString = http_build_query([
-                'q' => $word . ' user:birisic'
+                'q' => "$word repo:$user/$repository"
             ]);
 
-//            dd($queryString);
+//            var_dump($queryString);
+//            die;
 
-            return Http::withHeaders($headers)
-                ->withUrlParameters([
-                    'endpoint' => $endpoint,
-                    'word' => $word
-                ])->get("{+endpoint}?$queryString");
+            $response = Http::withHeaders($headers)->get("$endpoint?$queryString");
+            $contentType = $response->header('Content-Type');
+
+            $output = [];
+            foreach ($response->json()["items"] as $item) {
+                $output[] = $item["text_matches"];
+            }
+
+            return response()->json($output)->header('Content-Type', $contentType);
+
         }
 
 
