@@ -8,22 +8,35 @@ use Illuminate\Support\Facades\Http;
 
 class SearchController extends Controller
 {
-    public function getWordPopularity($word)
+    public function getWordPopularity($word, $platform = "github")
     {
         // validate word
 
-        $token = env("GITHUB_PERSONAL_ACCESS_TOKEN");
+        if ($platform === "github"){ // use enum
+            $authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
+            $endpoint = "https://api.github.com/search/issues";
+            $headers = [
+                "Accept" => "application/vnd.github.text-match+json",
+                "Authorization" => "Bearer $authorizationToken"
+            ];
 
-        $response = Http::withHeaders([
-            "Accept" => "application/vnd.github+json",
-            "Authorization" => "Bearer $token"
-        ])->withUrlParameters([
-            'endpoint' => 'https://api.github.com/search/issues',
-            'word' => $word
-        ])->get("{+endpoint}?q={word}");
+            $queryString = http_build_query([
+                'q' => $word . ' user:birisic'
+            ]);
+
+//            dd($queryString);
+
+            return Http::withHeaders($headers)
+                ->withUrlParameters([
+                    'endpoint' => $endpoint,
+                    'word' => $word
+                ])->get("{+endpoint}?$queryString");
+        }
 
 
 
-        return $response;
+
+
+//        return $response;
     }
 }
