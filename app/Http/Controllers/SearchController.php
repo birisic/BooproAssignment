@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Mockery\Exception;
 use function Laravel\Prompts\text;
 
 
@@ -25,7 +26,7 @@ class SearchController extends Controller
             ];
 
             $queryString = http_build_query([
-                'q' => "$word repo:$user/$repository"
+                'q' => "$word repo:$user/$repository" //maybe add qualifier for issues only
             ]);
 
             try {
@@ -34,18 +35,21 @@ class SearchController extends Controller
                     throw new \Exception("Response was not set.");
                 }
 
+//return $response;
                 //separate into a function
                 $contentType = $response->header('Content-Type');
-//                return $response;//response()->json($response)->header('Content-Type', $contentType);
+                $arrOfStrings = [];
 
-                $strings = [];
+                if (!isset($response->json()["items"])) {
+                    throw new Exception("No 'items' array retrieved from the response.");
+                }
+
                 foreach ($response->json()["items"] as $issue) {
                     foreach ($issue["text_matches"] as $textMatch) {
                         $text = strtolower(str_replace(["\n", "\t", ""], "", $textMatch["fragment"]));
-//                        $strings[] = $text;
 
                         if (preg_match("/\b(?:php\s*(rocks|sucks))\b/i", $text)){
-                            $strings[] = $text;
+                            $arrOfStrings[] = $text;
                         }
                     }
                 }
@@ -53,7 +57,8 @@ class SearchController extends Controller
                 $counterPositive = 0;
                 $counterNegative = 0;
                 $arrOfWords = [];
-                foreach ($strings as $string) {
+
+                foreach ($arrOfStrings as $string) {
                     $words = array_filter(explode(" ", $string)); //remove extra spaces
                     $arrOfWords[] = array_values($words); //use only values
                 }
@@ -74,12 +79,10 @@ class SearchController extends Controller
                 }
 
                 $counterTotal = $counterPositive + $counterNegative;
+                $score = 0;
 
                 if ($counterTotal != 0) {
                     $score = ($counterPositive / $counterTotal) * 10;
-                }
-                else {
-                    $score = 0;
                 }
 
                 $output = [
