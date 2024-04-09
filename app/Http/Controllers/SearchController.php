@@ -15,7 +15,9 @@ class SearchController extends Controller
     {
         //validate word
 
-        if ($platform === "github") { //use enum
+        //check in the database if there were previous searches for the given word in the given context
+
+//        if ($platform === "github") { //use enum
             $authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
             $endpoint = "https://api.github.com/search/issues";
             $user = "birisic";
@@ -99,8 +101,8 @@ class SearchController extends Controller
                 Log::error("Http response error: " . $e->getMessage());
                 return "An error occurred on the server.";
             }
-        }
+//        }
 
-        return "Other platform.";
+//        return "Other platform.";
     }
 }
