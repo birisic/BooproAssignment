@@ -8,5 +8,5 @@ interface SearchableInterface
 {
     function search(): Response;
 
-    function calcPopularityScore(): float;
+    function calcPopularityScore(array $items): array;
 }

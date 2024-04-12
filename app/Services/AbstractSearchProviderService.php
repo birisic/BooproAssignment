@@ -16,5 +16,5 @@ abstract class AbstractSearchProviderService implements SearchableInterface
 
     public abstract function search(): Response;
 
-    public abstract function calcPopularityScore(): float;
+    public abstract function calcPopularityScore(array $items): array;
 }
