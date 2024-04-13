@@ -29,8 +29,16 @@ class SearchController extends Controller
             try {
                 $gitHubService = new GitHubService($word, $endpoint, $authorizationToken, $user, $repository, $headers);
                 $httpResponse = $gitHubService->search();
+//                return $httpResponse["items"];
 
                 $contentType = $httpResponse->header('Content-Type');
+
+                // check if there is a record in the database for this word and in the given context.
+                // if there is, then check if it was updated within the last hour. If that's the case,
+                // then retrieve the values from the database. Otherwise, recalculate the score.
+                $arrOutput = [];
+
+
                 $arrOutput = $gitHubService->calcPopularityScore($httpResponse["items"]);
 
                 return response()->json($arrOutput)->header('Content-Type', $contentType);

@@ -21,8 +21,10 @@ class GitHubService extends AbstractSearchProviderService
 
     public function search(): Response
     {
+        // limitations: 4000 repos, max 100? items per page, max 100 pages
         $queryStringParams = [
-            'q' => "$this->word" //maybe add qualifier for issues only
+            'q' => '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"', //maybe add qualifier for issues only
+            'per_page' => 100 //include for pagination (100 max)
         ];
 
         if ($this->username != null && $this->contextName != null){
@@ -30,6 +32,7 @@ class GitHubService extends AbstractSearchProviderService
         }
 
         $queryString = http_build_query($queryStringParams);
+//        var_dump($queryString); die;
 
         $response = Http::withHeaders($this->headers)->get("$this->endpoint?$queryString");
 
@@ -48,18 +51,22 @@ class GitHubService extends AbstractSearchProviderService
     {
         $arrOfStrings = [];
         foreach ($items as $issue) {
-            if (!$issue["text_matches"]){
+            if (!isset($issue["text_matches"])){
                 throw new \Exception("Accept header doesn't include text-match option or there were no text matches for an issue.");
             }
 
             foreach ($issue["text_matches"] as $textMatch) {
-                $text = strtolower(str_replace(["\n", "\t", ""], "", $textMatch["fragment"]));
+                if (isset($textMatch["fragment"])){
+                    $text = strtolower(str_replace(["\n", "\t", "", "\r\n", '.', ')', '-', ',', '\'', '"', '!', '?'], "", $textMatch["fragment"]));
 
-                if (preg_match("/\b(?:$this->word\s*(rocks|sucks))\b/i", $text)){
-                    $arrOfStrings[] = $text;
+                    if (preg_match("/\b(?:$this->word\s*(rocks|sucks))\b/i", $text)){
+                        $arrOfStrings[] = $text;
+                    }
                 }
             }
         }
+
+//        return $arrOfStrings;
 
         $counterPositive = 0;
         $counterNegative = 0;
@@ -69,14 +76,15 @@ class GitHubService extends AbstractSearchProviderService
             $words = array_filter(explode(" ", $string)); //remove extra spaces
             $arrOfWords[] = array_values($words);
         }
+//        return $arrOfWords;
 
         foreach ($arrOfWords as $words) {
             foreach ($words as $key=>$value) {
                 if ($value === $this->word){
-                    if ($words[$key + 1] === "rocks"){
+                    if (isset($words[$key + 1]) && $words[$key + 1] === "rocks"){
                         $counterPositive++;
                     }
-                    else if ($words[$key + 1] === "sucks"){
+                    else if (isset($words[$key + 1]) && $words[$key + 1] === "sucks"){
                         $counterNegative++;
                     }
                 }
@@ -95,11 +103,11 @@ class GitHubService extends AbstractSearchProviderService
         // otherwise, update with fresh data about its results.
 
         // insert/update in the database
-        $hasModified = $this->upsertInDatabase($this->word, $this->contextName, "GitHub");
-        if (!$hasModified){
-//            Log::error("Couldn't insert or update records for the database for the given word.");
-            throw new \Exception("Couldn't insert or update records in the database for the given word.");
-        }
+//        $hasModified = $this->upsertInDatabase($this->word, $this->contextName, "GitHub");
+//        if (!$hasModified){
+////            Log::error("Couldn't insert or update records for the database for the given word.");
+//            throw new \Exception("Couldn't insert or update records in the database for the given word.");
+//        }
 
         return [
             "term" => $this->word,
