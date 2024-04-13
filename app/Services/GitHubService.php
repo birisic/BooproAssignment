@@ -19,12 +19,14 @@ class GitHubService extends AbstractSearchProviderService
         $this->headers = $headers;
     }
 
-    public function search(): Response
+    public function search(): array
     {
-        // limitations: 4000 repos, max 100? items per page, max 100 pages
+        $numOfPages = 2; //number of pages to load from GitHub api ($numOfPages * per_page ~= $numOfResults)
+
+        // limitations: 4000 repos, max 100 items per page
         $queryStringParams = [
-            'q' => '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"', //maybe add qualifier for issues only
-            'per_page' => 100 //include for pagination (100 max)
+            'q' => '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"',
+            'per_page' => 100
         ];
 
         if ($this->username != null && $this->contextName != null){
@@ -32,19 +34,34 @@ class GitHubService extends AbstractSearchProviderService
         }
 
         $queryString = http_build_query($queryStringParams);
-//        var_dump($queryString); die;
 
-        $response = Http::withHeaders($this->headers)->get("$this->endpoint?$queryString");
-
-        if (!isset($response)){
-            throw new \Exception("No response was received from GitHub.");
-        }
+        $response = $this->makeRequest("$this->endpoint?$queryString");
 
         if (!isset($response["items"])) {
             throw new \Exception("No 'items' array retrieved from the response. Cannot search results.");
         }
 
-        return $response;
+        $allItems = $response["items"];
+        $pageNum = 1;
+
+        while ($pageNum <= $numOfPages) {
+            $nextPageUrl = $this->getNextPageUrl($response);
+
+            if (!isset($nextPageUrl)){
+                break;
+            }
+
+            $pageNum = $this->getPageNumber($nextPageUrl);
+            $response = $this->makeRequest($nextPageUrl);
+
+            if (!isset($response["items"])) {
+                throw new \Exception("No 'items' array retrieved from the response for page: $pageNum. Cannot search results.");
+            }
+
+            $allItems = array_merge($allItems, $response["items"]);
+        }
+
+        return $allItems;
     }
 
     public function calcPopularityScore(array $items): array
@@ -117,6 +134,34 @@ class GitHubService extends AbstractSearchProviderService
             "score" => round($score, 2)
         ];
     }
+
+    private function makeRequest(string $url): Response
+    {
+        return Http::withHeaders($this->headers)->get($url);
+    }
+
+    private function getPageNumber(string $url): int
+    {
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+        return $queryParams['page'] ?? 1;
+    }
+
+    private function getNextPageUrl(Response $response): ?string
+    {
+        if ($response->hasHeader('Link')) {
+            $linkHeader = $response->header('Link');
+
+            preg_match('/<([^>]+)>; rel="next"/', $linkHeader, $matches);
+            if (isset($matches[1])) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+
 
     private function upsertInDatabase($word, $contextName, $providerName): bool
     {

@@ -14,7 +14,7 @@ abstract class AbstractSearchProviderService implements SearchableInterface
     protected string $contextName;
     protected array $headers;
 
-    public abstract function search(): Response;
+    public abstract function search(): array;
 
     public abstract function calcPopularityScore(array $items): array;
 }

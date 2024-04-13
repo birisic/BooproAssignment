@@ -28,10 +28,10 @@ class SearchController extends Controller
 
             try {
                 $gitHubService = new GitHubService($word, $endpoint, $authorizationToken, $user, $repository, $headers);
-                $httpResponse = $gitHubService->search();
-//                return $httpResponse["items"];
+                $httpResponseItems = $gitHubService->search();
+//                return $httpResponseItems;
 
-                $contentType = $httpResponse->header('Content-Type');
+//                $contentType = $httpResponse->header('Content-Type');
 
                 // check if there is a record in the database for this word and in the given context.
                 // if there is, then check if it was updated within the last hour. If that's the case,
@@ -39,9 +39,9 @@ class SearchController extends Controller
                 $arrOutput = [];
 
 
-                $arrOutput = $gitHubService->calcPopularityScore($httpResponse["items"]);
+                $arrOutput = $gitHubService->calcPopularityScore($httpResponseItems);//["items"]);
 
-                return response()->json($arrOutput)->header('Content-Type', $contentType);
+                return response()->json($arrOutput)->header('Content-Type', "application/json");
             }
             catch (\Exception $e){
                 Log::error("Http response error: " . $e->getMessage());
