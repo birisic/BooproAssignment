@@ -170,8 +170,47 @@ class GitHubService extends AbstractSearchProviderService
             throw new \Exception("Positive or negative results are of invalid value. Positive: $positiveCount; Negative: $negativeCount");
         }
 
-        DB::beginTransaction();
-        $providerId = SearchProvider::where("name", "GitHub")->value("id");
+        try {
+            DB::beginTransaction();
+            $arrIds = $this->firstOrCreateWordAndContextIds();
+
+            $wordId = $arrIds["wordId"];
+            $contextId = $arrIds["contextId"];
+
+            $existingRecord = $this->findExistingSearchRecord($wordId, $contextId);
+
+            if (!$existingRecord) {
+                $this->insertNewSearchRecord($wordId, $contextId, $positiveCount, $negativeCount);
+                DB::commit();
+                return;
+            }
+
+            if ($existingRecord->count_positive !== $positiveCount || $existingRecord->count_negative !== $negativeCount) {
+                $columnsToUpdate = [
+                    "count_positive" => $positiveCount,
+                    "count_negative" => $negativeCount,
+                    "updated_at" => now(),
+                ];
+            }
+            else {
+                $columnsToUpdate = [
+                    "updated_at" => now(),
+                ];
+            }
+
+            $this->updateExistingSearchRecord($wordId, $contextId, $columnsToUpdate);
+
+            DB::commit();
+        }
+        catch (\Exception $e){
+            throw new \Exception($e->getMessage());
+        }
+    }
+    //end methods
+    private function firstOrCreateWordAndContextIds(): array
+    {
+        $arrIds = [];
+        $providerId = SearchProvider::getProviderId("GitHub");
 
         if (!isset($providerId)) {
             throw new \Exception("Provider ID not found.");
@@ -179,6 +218,11 @@ class GitHubService extends AbstractSearchProviderService
 
         $word = Word::firstOrCreate(["name" => $this->word]);
         $wordId = $word->id;
+
+        if (!isset($wordId)){
+            throw new \Exception("Could not insert or update a search record. WordId is missing. WordId: $wordId");
+        }
+        $arrIds["wordId"] = $wordId;
 
         $context = Context::firstOrCreate([
             "name" => $this->contextName !== '' ? $this->contextName : null,
@@ -188,54 +232,45 @@ class GitHubService extends AbstractSearchProviderService
         ]);
         $contextId = $context->id;
 
-        if (!isset($wordId) && !isset($contextId)){
-            throw new \Exception("Could not insert or update a search record. WordId or ContextId is missing. WordId: $wordId; ContextId: $contextId");
+        if (!isset($contextId)){
+            throw new \Exception("Could not insert or update a search record. ContextId is missing. ContextId: $contextId");
         }
+        $arrIds["contextId"] = $contextId;
 
-        // if the record for this word in this context with the given number of pages and number of items per page
-        // didn't previously exist, insert it.
-
-        $existingRecord = DB::table("searches")->where([
-                "word_id" => $wordId,
-                "context_id" => $contextId,
-                "count_pages" => $this->numOfPages,
-                "items_per_page" => $this->itemsPerPage
-            ])
-            ->first();
-
-        if (!isset($existingRecord)){
-            DB::table("searches")->insert([
-                "word_id" => $wordId,
-                "context_id" => $contextId,
-                "count_pages" => $this->numOfPages,
-                "items_per_page" => $this->itemsPerPage,
-                "count_positive" => $positiveCount,
-                "count_negative" => $negativeCount,
-                "created_at" => now(),
-                "updated_at" => now(),
-            ]);
-
-            DB::commit();
-            return;
-        }
-
-        // if the record for this word in this context with the given number of pages and number of items per page
-        // already exists, then check the values and update if there are differences. Otherwise, don't do anything.
-
-        if ($existingRecord->count_positive !== $positiveCount || $existingRecord->count_negative !== $negativeCount) {
-            DB::table("searches")->where([
-                "word_id" => $wordId,
-                "context_id" => $contextId,
-                "count_pages" => $this->numOfPages,
-                "items_per_page" => $this->itemsPerPage
-            ])->update([
-                "count_positive" => $positiveCount,
-                "count_negative" => $negativeCount,
-                "updated_at" => now(),
-            ]);
-
-            DB::commit();
-        }
+        return $arrIds;
     }
-    //end methods
+
+    private function findExistingSearchRecord(int $wordId, int $contextId): ?object
+    {
+        return DB::table("searches")->where([
+            "word_id" => $wordId,
+            "context_id" => $contextId,
+            "count_pages" => $this->numOfPages,
+            "items_per_page" => $this->itemsPerPage
+        ])->first();
+    }
+
+    private function insertNewSearchRecord(int $wordId, int $contextId, int $positiveCount, int $negativeCount): void
+    {
+        DB::table("searches")->insert([
+            "word_id" => $wordId,
+            "context_id" => $contextId,
+            "count_pages" => $this->numOfPages,
+            "items_per_page" => $this->itemsPerPage,
+            "count_positive" => $positiveCount,
+            "count_negative" => $negativeCount,
+            "created_at" => now(),
+            "updated_at" => now(),
+        ]);
+    }
+
+    private function updateExistingSearchRecord(int $wordId, int $contextId, array $columnsToUpdate): void
+    {
+        DB::table("searches")->where([
+            "word_id" => $wordId,
+            "context_id" => $contextId,
+            "count_pages" => $this->numOfPages,
+            "items_per_page" => $this->itemsPerPage
+        ])->update($columnsToUpdate);
+    }
 }

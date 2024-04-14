@@ -11,4 +11,8 @@ class SearchProvider extends Model
 
     protected $table = 'providers';
     protected $fillable = ['name'];
+
+    public static function getProviderId(string $providerName): int {
+        return SearchProvider::where("name", $providerName)->value("id");
+    }
 }

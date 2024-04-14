@@ -38,10 +38,7 @@ class SearchController extends Controller
                 // within the last hour. If that's the case, then retrieve the values from the database.
                 // Otherwise, search again and recalculate the score.
 
-                // samo ovde proveri za vreme, jer ako se udje u ponovno pretrazivanje i izracunavanje ocene nema potrebe
-                // ponovo proveravati za vreme, ako znamo iz ove provere da uslov nije zadovoljen
-
-                $providerId = SearchProvider::where("name", "GitHub")->value("id");
+                $providerId = SearchProvider::getProviderId("GitHub");
 
                 if (!isset($providerId)) {
                     throw new \Exception("Provider ID not found.");
@@ -66,7 +63,6 @@ class SearchController extends Controller
                 if ($searchRecord){
                     $updatedAt = Carbon::parse($searchRecord->updated_at);
                     $threshold = Carbon::now()->subHour();
-//                    var_dump($threshold); die;
 
                     if ($updatedAt->greaterThanOrEqualTo($threshold)) {
 
