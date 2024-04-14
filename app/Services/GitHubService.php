@@ -99,7 +99,6 @@ class GitHubService extends AbstractSearchProviderService
             $words = array_filter(explode(" ", $string)); //remove extra spaces
             $arrOfWords[] = array_values($words);
         }
-//        return $arrOfWords;
 
         foreach ($arrOfWords as $words) {
             foreach ($words as $key=>$value) {
@@ -121,7 +120,6 @@ class GitHubService extends AbstractSearchProviderService
             $score = ($counterPositive / $counterTotal) * 10;
         }
 
-        // insert/update in the database
         try {
             $this->insertOrUpdateRecordsInDatabase($counterPositive, $counterNegative);
 
@@ -180,7 +178,6 @@ class GitHubService extends AbstractSearchProviderService
             throw new \Exception($e->getMessage());
         }
     }
-    //end methods
     private function firstOrCreateWordAndContextIds(): array
     {
         $arrIds = [];
@@ -273,4 +270,5 @@ class GitHubService extends AbstractSearchProviderService
 
         return null;
     }
+    //end methods
 }
