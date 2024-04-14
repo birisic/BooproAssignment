@@ -138,32 +138,6 @@ class GitHubService extends AbstractSearchProviderService
         }
     }
 
-    private function makeRequest(string $url): Response
-    {
-        return Http::withHeaders($this->headers)->get($url);
-    }
-
-    private function getPageNumber(string $url): int
-    {
-        $queryString = parse_url($url, PHP_URL_QUERY);
-        parse_str($queryString, $queryParams);
-        return $queryParams['page'] ?? 1;
-    }
-
-    private function getNextPageUrl(Response $response): ?string
-    {
-        if ($response->hasHeader('Link')) {
-            $linkHeader = $response->header('Link');
-
-            preg_match('/<([^>]+)>; rel="next"/', $linkHeader, $matches);
-            if (isset($matches[1])) {
-                return $matches[1]; //next page url
-            }
-        }
-
-        return null;
-    }
-
     private function insertOrUpdateRecordsInDatabase(int $positiveCount, int $negativeCount): void
     {
         if ((!isset($positiveCount) || $positiveCount < 0) || (!isset($negativeCount) || $negativeCount < 0)){
@@ -272,5 +246,31 @@ class GitHubService extends AbstractSearchProviderService
             "count_pages" => $this->numOfPages,
             "items_per_page" => $this->itemsPerPage
         ])->update($columnsToUpdate);
+    }
+
+    private function makeRequest(string $url): Response
+    {
+        return Http::withHeaders($this->headers)->get($url);
+    }
+
+    private function getPageNumber(string $url): int
+    {
+        $queryString = parse_url($url, PHP_URL_QUERY);
+        parse_str($queryString, $queryParams);
+        return $queryParams['page'] ?? 1;
+    }
+
+    private function getNextPageUrl(Response $response): ?string
+    {
+        if ($response->hasHeader('Link')) {
+            $linkHeader = $response->header('Link');
+
+            preg_match('/<([^>]+)>; rel="next"/', $linkHeader, $matches);
+            if (isset($matches[1])) {
+                return $matches[1]; //next page url
+            }
+        }
+
+        return null;
     }
 }

@@ -13,6 +13,18 @@ use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
 {
+    // fields
+    private string $authorizationToken;
+    private string $endpoint;
+    private string $username;
+    private string $contextName;
+    private string $type;
+    private array $headers;
+    private int $numOfPages = 2;
+    private int $itemsPerPage = 100;
+    // end fields
+
+    // methods
     public function getWordPopularity($word, $platform = "github")
     {
         //validate word & platform
@@ -20,83 +32,31 @@ class SearchController extends Controller
         $provider = strtolower(trim($platform));
 
         if ($provider === strtolower(SearchProviderEnum::GITHUB->value)) {
-            $authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
-            $endpoint = "https://api.github.com/search/issues";
-            $username = "";
-            $repository = "";
-            $type = "";
-            $headers = [
-                "Accept" => "application/vnd.github.text-match+json",
-                "Authorization" => "Bearer $authorizationToken"
-            ];
-            $numOfPages = 2; //number of pages to load from GitHub api ($numOfPages * per_page ~= $numOfResults)
-            $itemsPerPage = 100;
-
             try {
-                // check if there is a record in the database for this word, in the given context, for the given
-                // number of pages and number of items par each page. if there is, then check if it was updated
-                // within the last hour. If that's the case, then retrieve the values from the database.
-                // Otherwise, search again and recalculate the score.
-
                 $providerId = SearchProvider::getProviderId("GitHub");
 
                 if (!isset($providerId)) {
                     throw new \Exception("Provider ID not found.");
                 }
 
-                $wordId = Word::where("name", $word)->value("id");
-                $contextId = Context::where([
-                    "name" => $repository !== '' ? $repository : null,
-                    "owner_username" => $username !== '' ? $username : null,
-                    "type" => $type !== '' ? $type : null,
-                    "provider_id" => $providerId,
-                ])->value("id");
+                $this->authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
+                $this->endpoint = "https://api.github.com/search/issues";
+                $this->username = "";
+                $this->contextName = "";
+                $this->type = "";
+                $this->headers = [
+                    "Accept" => "application/vnd.github.text-match+json",
+                    "Authorization" => "Bearer " . $this->authorizationToken
+                ];
 
-                $searchRecord = DB::table("searches")->where([
-                    "word_id" => $wordId,
-                    "context_id" => $contextId,
-                    "count_pages" => $numOfPages,
-                    "items_per_page" => $itemsPerPage
-                ])->first();
+                $searchRecord = $this->getSearchRecord($word, $providerId);
 
-                $arrOutput = [];
                 if ($searchRecord){
-                    $updatedAt = Carbon::parse($searchRecord->updated_at);
-                    $threshold = Carbon::now()->subHour();
-
-                    if ($updatedAt->greaterThanOrEqualTo($threshold)) {
-
-                        $counterTotal = $searchRecord->count_positive + $searchRecord->count_negative;
-                        $score = 0;
-
-                        if ($counterTotal != 0) {
-                            $score = ($searchRecord->count_positive / $counterTotal) * 10;
-                        }
-
-                        $arrOutput = [
-                            "term" => $word,
-                            "positiveCount" => $searchRecord->count_positive,
-                            "negativeCount" => $searchRecord->count_negative,
-                            "total" => $searchRecord->count_positive + $searchRecord->count_negative,
-                            "score" => round($score, 2)
-                        ];
-                    }
-                    else {
-                        $gitHubService = new GitHubService($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage);
-                        $httpResponseItems = $gitHubService->search();
-//                        return $httpResponseItems;
-
-                        $arrOutput = $gitHubService->calcPopularityScore($httpResponseItems);
-                    }
+                    $arrOutput = $this->calcPopularityScoreOrSearchAgain($searchRecord, $word);
                 }
                 else {
-                    $gitHubService = new GitHubService($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage);
-                    $httpResponseItems = $gitHubService->search();
-//                        return $httpResponseItems;
-
-                    $arrOutput = $gitHubService->calcPopularityScore($httpResponseItems);
+                    $arrOutput = $this->searchAndModifyDatabase($word);
                 }
-
 
                 return response()->json($arrOutput)->header('Content-Type', "application/json");
             }
@@ -111,4 +71,77 @@ class SearchController extends Controller
 
         return "Other platform.";
     }
+
+    private function searchAndModifyDatabase($word): array
+    {
+        try {
+            $gitHubService = new GitHubService($word, $this->endpoint, $this->username, $this->contextName,
+                                               $this->type, $this->headers, $this->numOfPages, $this->itemsPerPage);
+            $httpResponseItems = $gitHubService->search();
+
+            return $gitHubService->calcPopularityScore($httpResponseItems);
+        }
+        catch (\Exception $e){
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    private function calcPopularityScore($searchRecord, $word): array
+    {
+        $positiveCount = $searchRecord->count_positive;
+        $negativeCount = $searchRecord->count_negative;
+        $totalCount = $positiveCount + $negativeCount;
+        $score = 0;
+
+        if ($totalCount != 0) {
+            $score = ($positiveCount / $totalCount) * 10;
+        }
+
+        return [
+            "term" => $word,
+            "positiveCount" => $positiveCount,
+            "negativeCount" => $negativeCount,
+            "total" => $totalCount,
+            "score" => round($score, 2)
+        ];
+    }
+
+    private function calcPopularityScoreOrSearchAgain($searchRecord, $word): array
+    {
+        $updatedAt = Carbon::parse($searchRecord->updated_at);
+        $threshold = Carbon::now()->subHour();
+
+        try {
+            if ($updatedAt->greaterThanOrEqualTo($threshold)) {
+                $arrOutput = $this->calcPopularityScore($searchRecord, $word);
+            }
+            else {
+                $arrOutput = $this->searchAndModifyDatabase($word);
+            }
+
+            return $arrOutput;
+        }
+        catch (\Exception $e){
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    private function getSearchRecord($word, int $providerId): ?object
+    {
+        $wordId = Word::where("name", $word)->value("id");
+        $contextId = Context::where([
+            "name" => $this->contextName !== '' ? $this->contextName : null,
+            "owner_username" => $this->username !== '' ? $this->username : null,
+            "type" => $this->type !== '' ? $this->type : null,
+            "provider_id" => $providerId,
+        ])->value("id");
+
+        return DB::table("searches")->where([
+            "word_id" => $wordId,
+            "context_id" => $contextId,
+            "count_pages" => $this->numOfPages,
+            "items_per_page" => $this->itemsPerPage
+        ])->first();
+    }
+    // end methods
 }
