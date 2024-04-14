@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('searches', function (Blueprint $table) {
             $table->unsignedBigInteger("word_id");
             $table->unsignedBigInteger("context_id");
-            $table->integer("count_positive");
-            $table->integer("count_negative");
+            $table->unsignedInteger("count_positive");
+            $table->unsignedInteger("count_negative");
+            $table->unsignedInteger("count_pages");
+            $table->unsignedInteger("items_per_page");
             $table->timestamps();
 
             $table->primary(['word_id', 'context_id']);

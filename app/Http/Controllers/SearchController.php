@@ -31,8 +31,6 @@ class SearchController extends Controller
                 $httpResponseItems = $gitHubService->search();
 //                return $httpResponseItems;
 
-//                $contentType = $httpResponse->header('Content-Type');
-
                 // check if there is a record in the database for this word and in the given context.
                 // if there is, then check if it was updated within the last hour. If that's the case,
                 // then retrieve the values from the database. Otherwise, recalculate the score.

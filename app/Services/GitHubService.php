@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class GitHubService extends AbstractSearchProviderService
 {
+    //constructors
     public function __construct($word, $endpoint, $authToken, $username, $repository, $headers)
     {
         // validate params
@@ -18,7 +19,9 @@ class GitHubService extends AbstractSearchProviderService
         $this->contextName = $repository;
         $this->headers = $headers;
     }
+    //end constructors
 
+    //methods
     public function search(): array
     {
         $numOfPages = 2; //number of pages to load from GitHub api ($numOfPages * per_page ~= $numOfResults)
@@ -83,8 +86,6 @@ class GitHubService extends AbstractSearchProviderService
             }
         }
 
-//        return $arrOfStrings;
-
         $counterPositive = 0;
         $counterNegative = 0;
         $arrOfWords = [];
@@ -114,10 +115,6 @@ class GitHubService extends AbstractSearchProviderService
         if ($counterTotal != 0) {
             $score = ($counterPositive / $counterTotal) * 10;
         }
-
-        // before modifying, check if there is a record in the database for this word and in the given context.
-        // if there is, then check if it was updated within the last hour. If that's the case, don't update anything in the database.
-        // otherwise, update with fresh data about its results.
 
         // insert/update in the database
 //        $hasModified = $this->upsertInDatabase($this->word, $this->contextName, "GitHub");
@@ -154,7 +151,7 @@ class GitHubService extends AbstractSearchProviderService
 
             preg_match('/<([^>]+)>; rel="next"/', $linkHeader, $matches);
             if (isset($matches[1])) {
-                return $matches[1];
+                return $matches[1]; //next page url
             }
         }
 
@@ -168,4 +165,5 @@ class GitHubService extends AbstractSearchProviderService
 
         return false;
     }
+    //end methods
 }
