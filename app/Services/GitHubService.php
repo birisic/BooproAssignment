@@ -2,6 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Context;
+use App\Models\Search;
+use App\Models\SearchProvider;
+use App\Models\Word;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
@@ -9,27 +14,27 @@ use Illuminate\Support\Facades\Log;
 class GitHubService extends AbstractSearchProviderService
 {
     //constructors
-    public function __construct($word, $endpoint, $authToken, $username, $repository, $headers)
+    public function __construct($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage)
     {
         // validate params
         $this->word = $word;
-        $this->authorizationToken = $authToken;
         $this->endpoint = $endpoint;
         $this->username = $username;
         $this->contextName = $repository;
+        $this->type = $type;
         $this->headers = $headers;
+        $this->numOfPages = $numOfPages;
+        $this->itemsPerPage = $itemsPerPage;
     }
     //end constructors
 
     //methods
     public function search(): array
     {
-        $numOfPages = 2; //number of pages to load from GitHub api ($numOfPages * per_page ~= $numOfResults)
-
         // limitations: 4000 repos, max 100 items per page
         $queryStringParams = [
             'q' => '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"',
-            'per_page' => 100
+            'per_page' => $this->itemsPerPage
         ];
 
         if ($this->username != null && $this->contextName != null){
@@ -47,7 +52,7 @@ class GitHubService extends AbstractSearchProviderService
         $allItems = $response["items"];
         $pageNum = 1;
 
-        while ($pageNum <= $numOfPages) {
+        while ($pageNum <= $this->numOfPages) {
             $nextPageUrl = $this->getNextPageUrl($response);
 
             if (!isset($nextPageUrl)){
@@ -117,19 +122,20 @@ class GitHubService extends AbstractSearchProviderService
         }
 
         // insert/update in the database
-//        $hasModified = $this->upsertInDatabase($this->word, $this->contextName, "GitHub");
-//        if (!$hasModified){
-////            Log::error("Couldn't insert or update records for the database for the given word.");
-//            throw new \Exception("Couldn't insert or update records in the database for the given word.");
-//        }
+        try {
+            $this->insertOrUpdateRecordsInDatabase($counterPositive, $counterNegative);
 
-        return [
-            "term" => $this->word,
-            "positiveCount" => $counterPositive,
-            "negativeCount" => $counterNegative,
-            "total" => $counterTotal,
-            "score" => round($score, 2)
-        ];
+            return [
+                "term" => $this->word,
+                "positiveCount" => $counterPositive,
+                "negativeCount" => $counterNegative,
+                "total" => $counterTotal,
+                "score" => round($score, 2)
+            ];
+        }
+        catch (\Exception $e){
+            throw new \Exception("Database exception - " . $e->getMessage());
+        }
     }
 
     private function makeRequest(string $url): Response
@@ -158,12 +164,78 @@ class GitHubService extends AbstractSearchProviderService
         return null;
     }
 
-
-
-    private function upsertInDatabase($word, $contextName, $providerName): bool
+    private function insertOrUpdateRecordsInDatabase(int $positiveCount, int $negativeCount): void
     {
+        if ((!isset($positiveCount) || $positiveCount < 0) || (!isset($negativeCount) || $negativeCount < 0)){
+            throw new \Exception("Positive or negative results are of invalid value. Positive: $positiveCount; Negative: $negativeCount");
+        }
 
-        return false;
+        DB::beginTransaction();
+        $providerId = SearchProvider::where("name", "GitHub")->value("id");
+
+        if (!isset($providerId)) {
+            throw new \Exception("Provider ID not found.");
+        }
+
+        $word = Word::firstOrCreate(["name" => $this->word]);
+        $wordId = $word->id;
+
+        $context = Context::firstOrCreate([
+            "name" => $this->contextName !== '' ? $this->contextName : null,
+            "owner_username" => $this->username !== '' ? $this->username : null,
+            "type" => $this->type !== '' ? $this->type : null,
+            "provider_id" => $providerId,
+        ]);
+        $contextId = $context->id;
+
+        if (!isset($wordId) && !isset($contextId)){
+            throw new \Exception("Could not insert or update a search record. WordId or ContextId is missing. WordId: $wordId; ContextId: $contextId");
+        }
+
+        // if the record for this word in this context with the given number of pages and number of items per page
+        // didn't previously exist, insert it.
+
+        $existingRecord = DB::table("searches")->where([
+                "word_id" => $wordId,
+                "context_id" => $contextId,
+                "count_pages" => $this->numOfPages,
+                "items_per_page" => $this->itemsPerPage
+            ])
+            ->first();
+
+        if (!isset($existingRecord)){
+            DB::table("searches")->insert([
+                "word_id" => $wordId,
+                "context_id" => $contextId,
+                "count_pages" => $this->numOfPages,
+                "items_per_page" => $this->itemsPerPage,
+                "count_positive" => $positiveCount,
+                "count_negative" => $negativeCount,
+                "created_at" => now(),
+                "updated_at" => now(),
+            ]);
+
+            DB::commit();
+            return;
+        }
+
+        // if the record for this word in this context with the given number of pages and number of items per page
+        // already exists, then check the values and update if there are differences. Otherwise, don't do anything.
+
+        if ($existingRecord->count_positive !== $positiveCount || $existingRecord->count_negative !== $negativeCount) {
+            DB::table("searches")->where([
+                "word_id" => $wordId,
+                "context_id" => $contextId,
+                "count_pages" => $this->numOfPages,
+                "items_per_page" => $this->itemsPerPage
+            ])->update([
+                "count_positive" => $positiveCount,
+                "count_negative" => $negativeCount,
+                "updated_at" => now(),
+            ]);
+
+            DB::commit();
+        }
     }
     //end methods
 }
