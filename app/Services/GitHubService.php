@@ -3,13 +3,11 @@
 namespace App\Services;
 
 use App\Models\Context;
-use App\Models\Search;
 use App\Models\SearchProvider;
 use App\Models\Word;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Log;
 
 class GitHubService extends AbstractSearchProviderService
 {
