@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Interfaces\SearchableInterface;
 use Illuminate\Http\Client\Response;
 
-abstract class AbstractSearchProviderService implements SearchableInterface
+abstract class AbstractSearchProviderService
 {
     protected string $word;
     protected string $endpoint;
