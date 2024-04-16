@@ -58,12 +58,29 @@ and the underlying MySQL database are designed to support adding new search prov
 <details>
   <summary>Table of Contents</summary>
   <ol>
+    <li><a href="#how-to-kick-start-the-project">How To Kick-Start The Project</a></li>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#about-the-database">About The Database</a></li>
-    <li><a href="#how-to-kick-start-the-project">How To Kick-Start The Project</a></li>
   </ol>
 </details>
 
+
+
+<!-- AFTER CLONING -->
+## How To Kick-Start The Project
+
+Here's a list of things you should check before trying to run the app:
+<ul>
+    <li>clone the repo using git clone</li>
+    <li>run composer install to install dependencies</li>
+    <li>give a correct name for the database in the ENV file (mine was boopro-assignment)</li>
+    <li>run php artisan migrate:fresh —seed to create the DB and seed it with providers</li>
+    <li>add an access token in the ENV file</li>
+    <li>run php artisan serve</li>
+    <li>open Postman, enter the route URL and send a GET request</li>
+</ul>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -128,7 +145,6 @@ the first one being with a network call, and the second being loaded from the da
 
 
 
-
 <!-- DATABASE DESIGN -->
 ## About The Database
 
@@ -146,23 +162,5 @@ The `searches table` has a composite primary key comprised of four columns: `wor
 It consists of four columns because that's where all the data that uniquely defines a 'search' is residing. The results may
 vary drastically if we reduce or increase the number of pages or even the number of items per every page received. Word_id and
 context_id also have foreign key constraints on them.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- AFTER CLONING -->
-## How To Kick-Start The Project
-
-Here's a list of things you should check before trying to run the app:
-<ul>
-    <li>clone the repo using git clone</li>
-    <li>run composer install to install dependencies</li>
-    <li>give a correct name for the database in the ENV file (mine was boopro-assignment)</li>
-    <li>run php artisan migrate:fresh —seed to create the DB and seed it with providers</li>
-    <li>add an access token in the ENV file</li>
-    <li>run php artisan serve</li>
-    <li>open Postman, enter the route URL and send a GET request</li>
-</ul>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
