@@ -121,8 +121,8 @@ and working with the `business logic` of the assignment.
 `Postman` was used heavily for the development purposes of this assignment, and here are two examples of successful executions, 
 the first one being with a network call, and the second being loaded from the database:
 
-[//]: # (<img src="public/assets/images/postman-javascript.png" alt="Database" width="900"/>)
-[//]: # (<img src="public/assets/images/postman-kotlin.png" alt="Database" width="900"/>)
+<img src="public/assets/images/postman-javascript.png" alt="Database" width="900"/>
+<img src="public/assets/images/postman-kotlin.png" alt="Database" width="900"/>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
