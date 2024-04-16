@@ -58,25 +58,9 @@ and the underlying MySQL database are designed to support adding new search prov
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#about-the-database">About The Database</a></li>
+    <li><a href="#how-to-kick-start-the-project">How To Kick-Start The Project</a></li>
   </ol>
 </details>
 
@@ -97,7 +81,7 @@ to look for these positive and negative results and calculate a score based on t
 with its `REST API`, and the context was all publicly available GitHub issues, from all public repositories, or from a single repository. 
 <br/>
 <br/>
-The application has one single `GET route` with two parameters, the first of which is mandatory, and it's the actual word 
+The application has one single API `GET route` with two parameters, the first of which is mandatory, and it's the actual word 
 that will be searched. The second parameter is an optional platform with a default value of "GitHub" (`/score/{word}/{platform?}`).
 <br/>
 <br/>
@@ -137,8 +121,8 @@ and working with the `business logic` of the assignment.
 `Postman` was used heavily for the development purposes of this assignment, and here are two examples of successful executions, 
 the first one being with a network call, and the second being loaded from the database:
 
-<img src="public/assets/images/postman-javascript.png" alt="Database" width="900"/>
-<img src="public/assets/images/postman-kotlin.png" alt="Database" width="900"/>
+[//]: # (<img src="public/assets/images/postman-javascript.png" alt="Database" width="900"/>)
+[//]: # (<img src="public/assets/images/postman-kotlin.png" alt="Database" width="900"/>)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -148,9 +132,10 @@ the first one being with a network call, and the second being loaded from the da
 <!-- DATABASE DESIGN -->
 ## About The Database
 
-[//]: # (<img src="public/assets/images/database-design.png" alt="Database" width="926" height="627"/>)
+This is the physical design of the database in use:
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `birisic`, `BooproAssignment`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`
+[//]: # (<img src="public/assets/images/database-design.png" alt="Database" width="826"/>)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
