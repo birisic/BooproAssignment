@@ -25,7 +25,7 @@ class SearchController extends Controller
     // end fields
 
     // methods
-    public function getWordPopularity($word, $platform = "github")
+    public function getWordPopularity($word, $platform = "github"): string
     {
         //validate word & platform
 
@@ -33,7 +33,7 @@ class SearchController extends Controller
 
         if ($provider === strtolower(SearchProviderEnum::GITHUB->value)) {
             try {
-                $providerId = SearchProvider::getProviderId("GitHub");
+                $providerId = SearchProvider::getProviderId(SearchProviderEnum::GITHUB->value);
 
                 if (!isset($providerId)) {
                     throw new \Exception("Provider ID not found.");
