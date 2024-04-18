@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
-abstract class AbstractSearchProviderService
+use App\Interfaces\SearchableInterface;
+
+class SearchProviderService
 {
     protected string $word;
     protected string $endpoint;
@@ -19,7 +21,7 @@ abstract class AbstractSearchProviderService
     public function getType(): string { return $this->contextName; }
 
 
-    public abstract function search(): array;
-
-    public abstract function calcPopularityScore(array $items): array;
+//    public function search(): array { return []; }
+//
+//    public function calcPopularityScore(array $items): array { return []; }
 }

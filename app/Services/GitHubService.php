@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 
-class GitHubService extends AbstractSearchProviderService implements SearchableInterface
+class GitHubService extends SearchProviderService implements SearchableInterface
 {
     //constructors
     public function __construct($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage)

@@ -7,14 +7,12 @@ use App\Interfaces\SearchableInterface;
 use App\Models\Context;
 use App\Models\SearchProvider;
 use App\Models\Word;
-use App\Services\AbstractSearchProviderService;
 use App\Services\GitHubService;
+use App\Services\SearchProviderService;
 use App\Services\XService;
 use Carbon\Carbon;
-use Dotenv\Parser\Parser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use JetBrains\PhpStorm\NoReturn;
 
 class SearchController extends Controller
 {
@@ -22,7 +20,7 @@ class SearchController extends Controller
     private string $word;
     private int $numOfPages = 2;
     private int $itemsPerPage = 100;
-    private SearchableInterface $serviceInstance;
+    private SearchProviderService $serviceInstance;
     // end fields
 
     // methods
@@ -51,7 +49,7 @@ class SearchController extends Controller
 
             $this->word = $word;
 
-            // Make service instance
+            // make service instance
             $this->serviceInstance = $this->getServiceInstance($provider);
 
             $searchRecord = $this->getSearchRecord($providerId);
@@ -67,7 +65,6 @@ class SearchController extends Controller
             Log::error("Exception error message: " . $e->getMessage());
             return "An error occurred on the server.";
         }
-
     }
 
     private function searchAndModifyDatabase(): array
