@@ -167,6 +167,8 @@ class SearchController extends Controller
                 $this->numOfPages,
                 $this->itemsPerPage);
         }
+
+        return null;
     }
     // end methods
 }
