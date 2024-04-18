@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Interfaces\SearchableInterface;
 use App\Models\Context;
 use App\Models\SearchProvider;
 use App\Models\Word;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 
-class GitHubService extends AbstractSearchProviderService
+class GitHubService extends AbstractSearchProviderService implements SearchableInterface
 {
     //constructors
     public function __construct($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage)

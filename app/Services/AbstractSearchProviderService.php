@@ -13,6 +13,12 @@ abstract class AbstractSearchProviderService
     protected int $numOfPages;
     protected int $itemsPerPage;
 
+
+    public function getContextName(): string { return $this->contextName; }
+    public function getUsername(): string { return $this->contextName; }
+    public function getType(): string { return $this->contextName; }
+
+
     public abstract function search(): array;
 
     public abstract function calcPopularityScore(array $items): array;

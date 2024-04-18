@@ -3,25 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SearchProviderEnum;
+use App\Interfaces\SearchableInterface;
 use App\Models\Context;
 use App\Models\SearchProvider;
 use App\Models\Word;
+use App\Services\AbstractSearchProviderService;
 use App\Services\GitHubService;
+use App\Services\XService;
 use Carbon\Carbon;
+use Dotenv\Parser\Parser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use JetBrains\PhpStorm\NoReturn;
 
 class SearchController extends Controller
 {
     // fields
-    private string $authorizationToken;
-    private string $endpoint;
-    private string $username;
-    private string $contextName;
-    private string $type;
-    private array $headers;
+    private string $word;
     private int $numOfPages = 2;
     private int $itemsPerPage = 100;
+    private SearchableInterface $serviceInstance;
     // end fields
 
     // methods
@@ -29,64 +30,59 @@ class SearchController extends Controller
     {
         //validate word & platform
 
-        $provider = strtolower(trim($platform));
-
-        if ($provider === strtolower(SearchProviderEnum::GITHUB->value)) {
-            try {
-                $providerId = SearchProvider::getProviderId(SearchProviderEnum::GITHUB->value);
-
-                if (!isset($providerId)) {
-                    throw new \Exception("Provider ID not found.");
-                }
-
-                $this->authorizationToken = env("GITHUB_PERSONAL_ACCESS_TOKEN");
-                $this->endpoint = "https://api.github.com/search/issues";
-                $this->username = "";
-                $this->contextName = "";
-                $this->type = "";
-                $this->headers = [
-                    "Accept" => "application/vnd.github.text-match+json",
-                    "Authorization" => "Bearer " . $this->authorizationToken
-                ];
-
-                $searchRecord = $this->getSearchRecord($word, $providerId);
-
-                if ($searchRecord){
-                    $arrOutput = $this->calcPopularityScoreOrSearchAgain($searchRecord, $word);
-                }
-                else {
-                    $arrOutput = $this->searchAndModifyDatabase($word);
-                }
-
-                return response()->json($arrOutput)->header('Content-Type', "application/json");
-            }
-            catch (\Exception $e){
-                Log::error("Exception error message: " . $e->getMessage());
-                return "An error occurred on the server.";
+        $provider = null;
+        foreach (SearchProviderEnum::cases() as $providerName) {
+            if (strtolower(trim($platform)) === strtolower($providerName->value)) {
+                $provider = strtolower(trim($platform));
+                break;
             }
         }
-        else if ($provider === strtolower(SearchProviderEnum::X->value)){
-            return "x";
+
+        if (!isset($provider)) {
+            return "Platform not supported.";
         }
 
-        return "Other platform.";
+        try {
+            $providerId = SearchProvider::getProviderId($provider);
+
+            if (!isset($providerId)) {
+                throw new \Exception("Provider ID not found for provider name: " . $provider);
+            }
+
+            $this->word = $word;
+
+            // Make service instance
+            $this->serviceInstance = $this->getServiceInstance($provider);
+
+            $searchRecord = $this->getSearchRecord($providerId);
+
+            if ($searchRecord) {
+                $arrOutput = $this->calcPopularityScoreOrSearchAgain($searchRecord);
+            } else {
+                $arrOutput = $this->searchAndModifyDatabase();
+            }
+
+            return response()->json($arrOutput)->header('Content-Type', "application/json");
+        } catch (\Exception $e) {
+            Log::error("Exception error message: " . $e->getMessage());
+            return "An error occurred on the server.";
+        }
+
     }
 
-    private function searchAndModifyDatabase($word): array
+    private function searchAndModifyDatabase(): array
     {
         try {
-            $gitHubService = new GitHubService($word, $this->endpoint, $this->username, $this->contextName,
-                                               $this->type, $this->headers, $this->numOfPages, $this->itemsPerPage);
-            $httpResponseItems = $gitHubService->search();
+            $httpResponseItems = $this->serviceInstance->search();
 
-            return $gitHubService->calcPopularityScore($httpResponseItems);
+            return $this->serviceInstance->calcPopularityScore($httpResponseItems);
         }
         catch (\Exception $e){
             throw new \Exception($e->getMessage());
         }
     }
 
-    private function calcPopularityScore($searchRecord, $word): array
+    private function calcPopularityScore($searchRecord): array
     {
         $positiveCount = $searchRecord->count_positive;
         $negativeCount = $searchRecord->count_negative;
@@ -98,7 +94,7 @@ class SearchController extends Controller
         }
 
         return [
-            "term" => $word,
+            "term" => $this->word,
             "positiveCount" => $positiveCount,
             "negativeCount" => $negativeCount,
             "total" => $totalCount,
@@ -106,17 +102,17 @@ class SearchController extends Controller
         ];
     }
 
-    private function calcPopularityScoreOrSearchAgain($searchRecord, $word): array
+    private function calcPopularityScoreOrSearchAgain($searchRecord): array
     {
         $updatedAt = Carbon::parse($searchRecord->updated_at);
         $threshold = Carbon::now()->subHour();
 
         try {
             if ($updatedAt->greaterThanOrEqualTo($threshold)) {
-                $arrOutput = $this->calcPopularityScore($searchRecord, $word);
+                $arrOutput = $this->calcPopularityScore($searchRecord);
             }
             else {
-                $arrOutput = $this->searchAndModifyDatabase($word);
+                $arrOutput = $this->searchAndModifyDatabase();
             }
 
             return $arrOutput;
@@ -126,13 +122,14 @@ class SearchController extends Controller
         }
     }
 
-    private function getSearchRecord($word, int $providerId): ?object
+    private function getSearchRecord(int $providerId): ?object
     {
-        $wordId = Word::where("name", $word)->value("id");
+        $instance = $this->serviceInstance;
+        $wordId = Word::where("name", $this->word)->value("id");
         $contextId = Context::where([
-            "name" => $this->contextName !== '' ? $this->contextName : null,
-            "owner_username" => $this->username !== '' ? $this->username : null,
-            "type" => $this->type !== '' ? $this->type : null,
+            "name" => $instance->getContextName() !== '' ? $instance->getContextName() : null,
+            "owner_username" => $instance->getUsername() !== '' ? $instance->getUsername() : null,
+            "type" => $instance->getType() !== '' ? $instance->getType() : null,
             "provider_id" => $providerId,
         ])->value("id");
 
@@ -142,6 +139,37 @@ class SearchController extends Controller
             "count_pages" => $this->numOfPages,
             "items_per_page" => $this->itemsPerPage
         ])->first();
+    }
+
+    private function getServiceInstance(string $provider)
+    {
+        if ($provider === "github") {
+            return new GitHubService(
+                $this->word,
+                env("GITHUB_API_ISSUES_ENDPOINT"),
+                "",
+                "",
+                "",
+                [
+                    "Accept" => "application/vnd.github.text-match+json",
+                    "Authorization" => "Bearer " . env("GITHUB_PERSONAL_ACCESS_TOKEN")
+                ],
+                $this->numOfPages,
+                $this->itemsPerPage);
+        }
+        else if ($provider === "x") {
+            return new XService(
+                $this->word,
+                "endpoint",
+                "",
+                "",
+                "",
+                [
+                    "header" => "header"
+                ],
+                $this->numOfPages,
+                $this->itemsPerPage);
+        }
     }
     // end methods
 }
