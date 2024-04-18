@@ -60,7 +60,7 @@ class SearchController extends Controller
                 $arrOutput = $this->searchAndModifyDatabase();
             }
 
-            return response()->json($arrOutput)->header('Content-Type', "application/json");
+            return response($arrOutput)->content();//->json($arrOutput)->header('Content-Type', "application/json");
         } catch (\Exception $e) {
             Log::error("Exception error message: " . $e->getMessage());
             return "An error occurred on the server.";
@@ -152,7 +152,8 @@ class SearchController extends Controller
                     "Authorization" => "Bearer " . env("GITHUB_PERSONAL_ACCESS_TOKEN")
                 ],
                 $this->numOfPages,
-                $this->itemsPerPage);
+                $this->itemsPerPage
+            );
         }
         else if ($provider === "x") {
             return new XService(
@@ -165,7 +166,8 @@ class SearchController extends Controller
                     "header" => "header"
                 ],
                 $this->numOfPages,
-                $this->itemsPerPage);
+                $this->itemsPerPage
+            );
         }
 
         return null;
