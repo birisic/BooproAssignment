@@ -103,8 +103,20 @@ that will be searched. The second parameter is an optional platform with a defau
 <br/>
 <br/>
 `SearchController` is responsible for handling requests coming in from this route, and it has a couple of fields that are
-used throughout the class extensively. It uses an `environment variable` which holds a GitHub access token for authenticating
-requests sent to the GitHub REST API from which the app receives its data.
+used throughout the class extensively. It uses `environment variables` which hold a REST API endpoint and a GitHub access token
+for authenticating requests sent to the GitHub REST API endpoint from which the app receives its data. The controller also possesses
+a private field of type `SearchableInterface`, which is used to store a reference to an object of a service class that implements
+the interface, ensuring the `Dependency Inversion` principle from SOLID is kept. The object itself is injected using `Dependency Injection`
+from another private controller method into the method which accepts the route parameters, allowing the instantiation of the right
+service class based on the route parameter $platform. This allows for a single generic implementation of any service class object
+created, provided they all implement the SearchableInterface, and a clean separation of concerns which `decouples the code`.
+<br/>
+<br/>
+`SearchableInterface` is a contract made for any service class created with the purpose of implementing searching and calculating
+word popularity score functionalities through `polymorphism`. It `prescribes two methods` which all classes that adhere to this 
+interface must provide an implementation for: `search` and `calcPopularityScore`. This interface serves as an `abstraction`
+for the controller to interact with various search provider service classes in a generic way, and as an assigner of certain rules
+for the same implementing service classes.
 <br/>
 <br/>
 To not allow any platform parameter values which are not supported on the system, and also minimize human error in validation,
@@ -122,16 +134,16 @@ it has no other option but to search again and try to refresh the data.
 To aid the controller in working with the different search providers, I've envisioned that a different class will exist
 for every new search provider supported, `separating concerns` and `decoupling the code` while following the
 `Single Responsibility` and `Open-Closed` SOLID Principles. For the purposes of this assignment, I've added a new App\Services layer
-and inside of it created two service classes: `AbstractSearchProviderService` and `GitHubService`.
+and inside of it created three service classes: `AbstractSearchProviderService`, `GitHubService` and `XService`.
 <br/>
 <br/>
-An abstract class is provided to be the primary base class for all new search provider classes created in the future. 
-It includes some general fields which will probably be needed for all extended classes, and `prescribes two abstract methods`
-that all extended classes need to provide an implementation for: search and calcPopularityScore.
+An `abstract class` is provided as the primary base class for all new search provider classes created in the future. 
+It includes some general fields which will probably be needed for all extended classes, and `getter methods` for accessing
+services' protected fields.
 <br/>
 <br/>
 The `GitHubService class` is the place where all the magic happens. It is responsible for handling `REST API network calls`, 
-updating database records, and returning scores or messages to the controller. It contains a robust set of methods for encapsulating
+updating database records, and returning scores or messages to the controller. It contains a robust set of methods for `encapsulating`
 and working with the `business logic` of the assignment.
 <br/>
 <br/>
