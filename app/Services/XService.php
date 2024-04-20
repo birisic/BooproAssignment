@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Interfaces\SearchableInterface;
 
-class XService extends SearchProviderService implements SearchableInterface
+class XService extends AbstractSearchProviderService implements SearchableInterface
 {
     //constructors
     public function __construct($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage)

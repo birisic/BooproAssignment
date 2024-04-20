@@ -19,6 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-//        $this->app->scoped(SearchableInterface::class, SearchProviderService::class);
+//        $this->app->scoped(SearchableInterface::class, AbstractSearchProviderService::class);
     }
 }

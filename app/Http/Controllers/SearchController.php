@@ -8,7 +8,6 @@ use App\Models\Context;
 use App\Models\SearchProvider;
 use App\Models\Word;
 use App\Services\GitHubService;
-use App\Services\SearchProviderService;
 use App\Services\XService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +19,7 @@ class SearchController extends Controller
     private string $word;
     private int $numOfPages = 2;
     private int $itemsPerPage = 100;
-    private SearchProviderService $serviceInstance;
+    private SearchableInterface $serviceInstance;
     // end fields
 
     // methods
@@ -60,7 +59,7 @@ class SearchController extends Controller
                 $arrOutput = $this->searchAndModifyDatabase();
             }
 
-            return response($arrOutput)->content();//->json($arrOutput)->header('Content-Type', "application/json");
+            return response()->json($arrOutput)->header('Content-Type', "application/json");
         } catch (\Exception $e) {
             Log::error("Exception error message: " . $e->getMessage());
             return "An error occurred on the server.";
@@ -69,14 +68,7 @@ class SearchController extends Controller
 
     private function searchAndModifyDatabase(): array
     {
-        try {
-            $httpResponseItems = $this->serviceInstance->search();
-
-            return $this->serviceInstance->calcPopularityScore($httpResponseItems);
-        }
-        catch (\Exception $e){
-            throw new \Exception($e->getMessage());
-        }
+        return $this->serviceInstance->calcPopularityScore();
     }
 
     private function calcPopularityScore($searchRecord): array
@@ -104,19 +96,14 @@ class SearchController extends Controller
         $updatedAt = Carbon::parse($searchRecord->updated_at);
         $threshold = Carbon::now()->subHour();
 
-        try {
-            if ($updatedAt->greaterThanOrEqualTo($threshold)) {
-                $arrOutput = $this->calcPopularityScore($searchRecord);
-            }
-            else {
-                $arrOutput = $this->searchAndModifyDatabase();
-            }
+        if ($updatedAt->greaterThanOrEqualTo($threshold)) {
+            $arrOutput = $this->calcPopularityScore($searchRecord);
+        }
+        else {
+            $arrOutput = $this->searchAndModifyDatabase();
+        }
 
-            return $arrOutput;
-        }
-        catch (\Exception $e){
-            throw new \Exception($e->getMessage());
-        }
+        return $arrOutput;
     }
 
     private function getSearchRecord(int $providerId): ?object

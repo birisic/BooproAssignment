@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Response;
 
-class GitHubService extends SearchProviderService implements SearchableInterface
+class GitHubService extends AbstractSearchProviderService implements SearchableInterface
 {
     //constructors
     public function __construct($word, $endpoint, $username, $repository, $type, $headers, $numOfPages, $itemsPerPage)
@@ -31,8 +31,9 @@ class GitHubService extends SearchProviderService implements SearchableInterface
     public function search(): array
     {
         // limitations: 4000 repos, max 100 items per page
+        $searchQuery = '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"'; // use complete phrases to reduce the total number of items retrieved
         $queryStringParams = [
-            'q' => '"' . $this->word . ' rocks" OR "' . $this->word . ' sucks"',
+            'q' => $searchQuery,
             'per_page' => $this->itemsPerPage
         ];
 
@@ -71,8 +72,10 @@ class GitHubService extends SearchProviderService implements SearchableInterface
         return $allItems;
     }
 
-    public function calcPopularityScore(array $items): array
+    public function calcPopularityScore(): array
     {
+        $items = $this->search();
+
         $arrOfStrings = [];
         foreach ($items as $issue) {
             if (!isset($issue["text_matches"])){
@@ -141,41 +144,29 @@ class GitHubService extends SearchProviderService implements SearchableInterface
             throw new \Exception("Positive or negative results are of invalid value. Positive: $positiveCount; Negative: $negativeCount");
         }
 
-        try {
-            DB::beginTransaction();
-            $arrIds = $this->firstOrCreateWordAndContextIds();
+        DB::beginTransaction();
+        $arrIds = $this->firstOrCreateWordAndContextIds();
 
-            $wordId = $arrIds["wordId"];
-            $contextId = $arrIds["contextId"];
+        $wordId = $arrIds["wordId"];
+        $contextId = $arrIds["contextId"];
 
-            $existingRecord = $this->findExistingSearchRecord($wordId, $contextId);
+        $existingRecord = $this->findExistingSearchRecord($wordId, $contextId);
 
-            if (!$existingRecord) {
-                $this->insertNewSearchRecord($wordId, $contextId, $positiveCount, $negativeCount);
-                DB::commit();
-                return;
-            }
-
-            if ($existingRecord->count_positive !== $positiveCount || $existingRecord->count_negative !== $negativeCount) {
-                $columnsToUpdate = [
-                    "count_positive" => $positiveCount,
-                    "count_negative" => $negativeCount,
-                    "updated_at" => now(),
-                ];
-            }
-            else {
-                $columnsToUpdate = [
-                    "updated_at" => now(),
-                ];
-            }
-
-            $this->updateExistingSearchRecord($wordId, $contextId, $columnsToUpdate);
-
+        if (!$existingRecord) {
+            $this->insertNewSearchRecord($wordId, $contextId, $positiveCount, $negativeCount);
             DB::commit();
+            return;
         }
-        catch (\Exception $e){
-            throw new \Exception($e->getMessage());
-        }
+
+        $columnsToUpdate = [
+            "count_positive" => ($existingRecord->count_positive !== $positiveCount) ? $positiveCount : $existingRecord->count_positive,
+            "count_negative" => ($existingRecord->count_negative !== $negativeCount) ? $negativeCount : $existingRecord->count_negative,
+            "updated_at" => now(),
+        ];
+
+        $this->updateExistingSearchRecord($wordId, $contextId, $columnsToUpdate);
+
+        DB::commit();
     }
     private function firstOrCreateWordAndContextIds(): array
     {
