@@ -43,7 +43,7 @@
 <h3 align="center">Word Popularity Score App</h3>
 
   <p align="center">
-    This is an assignment project for Boopro. The primary objective here was to make a scalable web application 
+    This is an assignment project for the company Boopro. The primary objective here was to make a scalable web application 
 in Laravel 11 that would search GitHub issues and efficiently calculate a popularity score for any word. The application 
 and the underlying MySQL database are designed to support adding new search providers in the future.
     <br />
@@ -75,7 +75,9 @@ Here's a list of things you should check before trying to run the app:
     <li>run composer install to install dependencies</li>
     <li>give a correct name for the database in the ENV file (mine was boopro-assignment)</li>
     <li>run php artisan migrate:fresh —seed to create the DB and seed it with providers</li>
-    <li>add an access token in the ENV file</li>
+    <li>add an access token in the ENV file under the key GITHUB_PERSONAL_ACCESS_TOKEN</li>
+    <li>add an endpoint in the ENV file under the key GITHUB_API_ISSUES_ENDPOINT</li>
+    <li>start a MySQL server</li>
     <li>run php artisan serve</li>
     <li>open Postman, enter the route URL and send a GET request</li>
 </ul>
