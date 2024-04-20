@@ -61,6 +61,7 @@ and the underlying MySQL database are designed to support adding new search prov
     <li><a href="#how-to-kick-start-the-project">How To Kick-Start The Project</a></li>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#about-the-database">About The Database</a></li>
+    <li><a href="#about-the-json:api-specification">About The JSON:API Specification</a></li>
   </ol>
 </details>
 
@@ -178,3 +179,24 @@ vary drastically if we reduce or increase the number of pages or even the number
 context_id also have foreign key constraints on them.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- ABOUT JSON:API SPECIFICATION -->
+## About The JSON:API Specification
+
+JSON:API is a specification for building APIs that use JSON as the data format. It provides conventions for structuring responses
+and requests, making it easier for clients to understand and interact with APIs.
+Key features:
+<ul>
+    <li>Resources represent entities of the system; they may include:
+        <ul>
+            <li>A unique identifier</li>
+            <li>A type</li>
+            <li>Additional attributes</li>
+            <li>Relationships</li>
+        </ul>
+    </li>
+    <li>Responses include a top-level data object containing the resource data, along with optional included and links objects</li>
+    <li>Pagination and linking between resources</li>
+    <li>Standardized format for errors; Error responses include a top-level errors array containing one or more error objects</li>
+</ul>
