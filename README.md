@@ -61,7 +61,7 @@ and the underlying MySQL database are designed to support adding new search prov
     <li><a href="#how-to-kick-start-the-project">How To Kick-Start The Project</a></li>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#about-the-database">About The Database</a></li>
-    <li><a href="#about-the-json:api-specification">About The JSON:API Specification</a></li>
+    <li><a href="#about-the-json-api-specification">About The JSON API Specification</a></li>
   </ol>
 </details>
 
@@ -182,7 +182,7 @@ context_id also have foreign key constraints on them.
 
 
 <!-- ABOUT JSON:API SPECIFICATION -->
-## About The JSON:API Specification
+## About The JSON API Specification
 
 JSON:API is a specification for building APIs that use JSON as the data format. It provides conventions for structuring responses
 and requests, making it easier for clients to understand and interact with APIs.
