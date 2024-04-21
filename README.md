@@ -200,3 +200,79 @@ Key features:
     <li>Pagination and linking between resources</li>
     <li>Standardized format for errors; Error responses include a top-level errors array containing one or more error objects</li>
 </ul>
+
+Examples: <br/>
+Fetching a product in a web shop (GET request)<br/>
+Response:
+```json
+{
+  "data": {
+    "type": "product",
+    "id": "1",
+    "attributes": {
+      "name": "Laptop",
+      "price": 999.99,
+      "description": "A powerful laptop for professional use.",
+      "stock": 10
+    },
+    "links": {
+      "self": "/products/1"
+    }
+  }
+}
+```
+
+Making a new order (POST request) <br/>
+Request:
+```json
+{
+  "data": {
+    "type": "order",
+    "attributes": {
+      "customer_name": "Pera Peric",
+      "email": "email@example.com",
+      "total_amount": 999.99,
+      "status": "pending"
+    },
+    "relationships": {
+      "items": {
+        "data": [
+          { "type": "order-item", "id": "1" },
+          { "type": "order-item", "id": "2" }
+        ]
+      }
+    }
+  }
+}
+```
+Response:
+```json
+{
+  "data": {
+    "type": "order",
+    "id": "56234",
+    "attributes": {
+      "customer_name": "Pera Peric",
+      "email": "email@example.com",
+      "total_amount": 999.99,
+      "status": "pending"
+    },
+    "links": {
+      "self": "/orders/56234"
+    }
+  }
+}
+```
+
+In case of failed order creation, an error response is returned:
+```json
+{
+  "errors": [
+    {
+      "status": "400",
+      "title": "Invalid Order Data",
+      "detail": "The provided email address is invalid."
+    }
+  ]
+}
+```
