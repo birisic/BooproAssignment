@@ -129,7 +129,7 @@ class GitHubService extends AbstractSearchProviderService implements SearchableI
                 "term" => $this->word,
                 "positiveCount" => $counterPositive,
                 "negativeCount" => $counterNegative,
-                "total" => $counterTotal,
+                "totalCount" => $counterTotal,
                 "score" => round($score, 2)
             ];
         }

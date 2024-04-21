@@ -23,6 +23,49 @@ class SearchController extends Controller
     // end fields
 
     // methods
+    /**
+     * @OA\Info(
+     *      title="Word popularity score API",
+     *      version="1.0.0",
+     *      description="Laravel 11 API that retrieves the popularity score for a given word on a specified platform."
+     *  )
+     * @OA\Get(
+     *     path="/api/score/{word}/{platform}",
+     *     summary="Get Word Popularity",
+     *     description="Endpoint to retrieve the popularity score for a word on a specified platform.",
+     *     tags={"Search"},
+     *     @OA\Parameter(
+     *         name="word",
+     *         in="path",
+     *         required=true,
+     *         description="The word for which to retrieve the popularity score.",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="platform",
+     *         in="path",
+     *         allowEmptyValue=true,
+     *         required=false,
+     *         description="The platform from which to retrieve the popularity score (optional).",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success: Popularity score retrieved.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="term", type="string", example="php"),
+     *             @OA\Property(property="countPositive", type="integer", example=3),
+     *             @OA\Property(property="countNegative", type="integer", example=7),
+     *             @OA\Property(property="countTotal", type="integer", example=10),
+     *             @OA\Property(property="score", type="integer", example=0.3)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error: An unexpected error occurred."
+     *     )
+     * )
+     */
     public function getWordPopularity($word, $platform = "github"): string
     {
         //validate word & platform

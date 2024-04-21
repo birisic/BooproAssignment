@@ -27,7 +27,7 @@ class XService extends AbstractSearchProviderService implements SearchableInterf
         return [];
     }
 
-    public function calcPopularityScore(array $items): array
+    public function calcPopularityScore(): array
     {
         return [];
     }
