@@ -104,18 +104,11 @@ Spin it up:
   </li>
   <li><strong>Usage:</strong>
     <ul>
-      <li>Run the containers:
-        <ul>
-          <li>In PHPStorm terminal, run:
-            <pre><code>bash ./vendor/bin/sail up</code></pre>
-          </li>
-          <li>Or, in PowerShell (WSL):
+      <li>To start the containers, use PowerShell (WSL) or any other terminal to run:
             <pre><code>bash ./vendor/bin/sail up -d</code></pre>
-          </li>
-        </ul>
       </li>
       <li>After the first time, you can start the containers in Docker Desktop as well</li>
-      <li>From Linux, run migrations:
+      <li>From Linux or WSL run migrations:
         <pre><code>./vendor/bin/sail artisan migrate:fresh --seed</code></pre>
       </li>
       <li>Add a new OAuth2 client:
