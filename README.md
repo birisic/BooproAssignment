@@ -108,14 +108,27 @@ Spin it up:
             <pre><code>bash ./vendor/bin/sail up -d</code></pre>
       </li>
       <li>After the first time, you can start the containers in Docker Desktop as well</li>
+      <li>Check which Linux distributions you have installed, and make sure one of them is set as default:
+        <pre><code>wsl -l -v</code></pre>
+      </li>
+      <li>Set a Linux distribution as a default one (ex. Ubuntu):
+        <pre><code>wsl --set-default {DISTRO_NAME}</code></pre>
+      </li>
       <li>From Linux or WSL run migrations:
         <pre><code>./vendor/bin/sail artisan migrate:fresh --seed</code></pre>
       </li>
-      <li>Add a new OAuth2 client:
+      <li>Add a new OAuth2 client and save its ID and Secret (you can also find them in the database):
         <pre><code>./vendor/bin/sail artisan passport:client --client</code></pre>
       </li>
-      <li>Send your <code>client_id</code> and <code>client_secret</code> in a POST request to the <code>/oauth/token</code> route from Postman to retrieve an access token</li>
-      <li>Include the token in an <code>Authorization:Bearer + {token}</code> header, include a word you wish to search the popularity score for, and send a GET request to <code>/api/score/{word}</code></li>
+      <li>Send a POST request to the <code>/oauth/token</code> route from Postman to retrieve an access token. Body params:
+        <ul>
+            <li><code>grant_type: client_credentials</code></li>
+            <li><code>client_id: {your_client_id}</code></li>
+            <li><code>client_secret: {your_client_secret}</code></li>
+            <li><code>scope: ''</code></li>
+        </ul>
+      </li>
+      <li>Copy the token and include it in an <code>Authorization:Bearer + {token}</code> header, include a word you wish to search the popularity score for, and send a GET request to <code>/api/score/{word}</code></li>
     </ul>
   </li>
 </ul>
