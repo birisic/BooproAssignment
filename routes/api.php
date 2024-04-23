@@ -3,7 +3,7 @@
 use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
-Route::get("login", function(){
+Route::get("/login", function(){
     return "login page";
 })->name("login");
 
