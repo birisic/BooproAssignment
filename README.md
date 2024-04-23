@@ -128,7 +128,8 @@ Spin it up:
             <li><code>scope: ''</code></li>
         </ul>
       </li>
-      <li>Copy the token and include it in an <code>Authorization:Bearer + {token}</code> header, include a word you wish to search the popularity score for, and send a GET request to <code>/api/score/{word}</code></li>
+      <li>Copy the token and include it in an <code>Authorization:Bearer + {token}</code> header, include a word you wish to search
+the popularity score for, and send a GET request to <code>/api/v2/score/{word}</code></li>
     </ul>
   </li>
 </ul>
@@ -203,8 +204,8 @@ and working with the `business logic` of the assignment.
 `Postman` was used heavily for the development purposes of this assignment, and here are two examples of successful executions, 
 the first one being with a network call, and the second being loaded from the database:
 
-<img src="public/assets/images/postman-javascript.png" alt="Database" width="900"/>
-<img src="public/assets/images/postman-kotlin.png" alt="Database" width="900"/>
+<img src="public/assets/images/bp-oauth-token.png" alt="OAuth Token" width="900"/>
+<img src="public/assets/images/bp-api-v2.png" alt="API v2" width="900"/>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

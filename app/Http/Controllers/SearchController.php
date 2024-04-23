@@ -69,8 +69,6 @@ class SearchController extends Controller
      */
     public function getWordPopularity($word, $platform = "github"): JsonResponse
     {
-        //validate word & platform
-
         $provider = null;
         foreach (SearchProviderEnum::cases() as $providerName) {
             if (strtolower(trim($platform)) === strtolower($providerName->value)) {
