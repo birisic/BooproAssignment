@@ -73,6 +73,74 @@
                     }
                 }
             }
+        },
+        "/api/v2/score/{word}/{platform}": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Get Word Popularity",
+                "description": "Version 2 of the endpoint to retrieve the popularity score for a word on a specified platform.",
+                "operationId": "50498945456a512c4671a7c041b13bdd",
+                "parameters": [
+                    {
+                        "name": "word",
+                        "in": "path",
+                        "description": "The word for which to retrieve the popularity score.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "platform",
+                        "in": "path",
+                        "description": "The platform from which to retrieve the popularity score (optional).",
+                        "required": false,
+                        "allowEmptyValue": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success: Popularity score retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "term": {
+                                            "type": "string",
+                                            "example": "php"
+                                        },
+                                        "countPositive": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "countNegative": {
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "countTotal": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "score": {
+                                            "type": "integer",
+                                            "example": 0.3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error: An unexpected error occurred."
+                    }
+                }
+            }
         }
     },
     "components": {

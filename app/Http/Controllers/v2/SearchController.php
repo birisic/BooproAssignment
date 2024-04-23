@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\v2;
 
 use App\Enums\SearchProviderEnum;
+use App\Http\Controllers\Controller;
 use App\Interfaces\SearchableInterface;
 use App\Models\Context;
 use App\Models\SearchProvider;
@@ -25,15 +26,11 @@ class SearchController extends Controller
 
     // methods
     /**
-     * @OA\Info(
-     *      title="Word popularity score API",
-     *      version="1.0.0",
-     *      description="Laravel 11 API that retrieves the popularity score for a given word on a specified platform."
-     *  )
+     *
      * @OA\Get(
-     *     path="/api/score/{word}/{platform}",
+     *     path="/api/v2/score/{word}/{platform}",
      *     summary="Get Word Popularity",
-     *     description="Endpoint to retrieve the popularity score for a word on a specified platform.",
+     *     description="Version 2 of the endpoint to retrieve the popularity score for a word on a specified platform.",
      *     tags={"Search"},
      *     @OA\Parameter(
      *         name="word",
@@ -80,7 +77,14 @@ class SearchController extends Controller
         }
 
         if (!isset($provider)) {
-            return response()->json(["error" => "Platform not supported."]);
+            return response()->json([
+                'errors' => [
+                    [
+                        'title' => 'Platform not supported.',
+                        'status' => 400
+                    ]
+                ]
+            ], 400);
         }
 
         try {
@@ -106,7 +110,14 @@ class SearchController extends Controller
             return response()->json($arrOutput);
         } catch (\Exception $e) {
             Log::error("Exception error message: " . $e->getMessage());
-            return response()->json(["error" => "An error occurred on the server."]);
+            return response()->json([
+                'errors' => [
+                    [
+                        'title' => 'An error occurred on the server.',
+                        'status' => 500
+                    ]
+                ]
+            ], 500);
         }
     }
 
@@ -126,12 +137,19 @@ class SearchController extends Controller
             $score = ($positiveCount / $totalCount) * 10;
         }
 
-        return [
+        $arrOutput = [
             "term" => $this->word,
             "positiveCount" => $positiveCount,
             "negativeCount" => $negativeCount,
-            "total" => $totalCount,
+            "totalCount" => $totalCount,
             "score" => round($score, 2)
+        ];
+
+        return [
+            'data' => [
+                'type' => 'popularity-score',
+                'attributes' => $arrOutput,
+            ],
         ];
     }
 

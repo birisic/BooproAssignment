@@ -125,13 +125,21 @@ class GitHubService extends AbstractSearchProviderService implements SearchableI
         try {
             $this->insertOrUpdateRecordsInDatabase($counterPositive, $counterNegative);
 
-            return [
+            $arrOutput = [
                 "term" => $this->word,
                 "positiveCount" => $counterPositive,
                 "negativeCount" => $counterNegative,
                 "totalCount" => $counterTotal,
                 "score" => round($score, 2)
             ];
+
+            return [
+                'data' => [
+                    'type' => 'popularity-score',
+                    'attributes' => $arrOutput,
+                ],
+            ];
+
         }
         catch (\Exception $e){
             throw new \Exception("Database exception - " . $e->getMessage());
