@@ -37,7 +37,6 @@ class RouteTest extends TestCase
 //        $response->assertStatus(200);
 //        return $response->json('access_token');
 //    }
-
 //    public function test_authorized_client_searches_word_score(): void
 //    {
 //        $token = "";//$this->test_unauthorized_client_receives_oauth_token();
