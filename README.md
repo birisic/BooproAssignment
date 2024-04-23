@@ -70,17 +70,61 @@ and the underlying MySQL database are designed to support adding new search prov
 <!-- AFTER CLONING -->
 ## How To Kick-Start The Project
 
-Here's a list of things you should check before trying to run the app:
+Spin it up:
+
 <ul>
-    <li>clone the repo using git clone</li>
-    <li>run composer install to install dependencies</li>
-    <li>give a correct name for the database in the ENV file (mine was boopro-assignment)</li>
-    <li>run php artisan migrate:fresh —seed to create the DB and seed it with providers</li>
-    <li>add an access token in the ENV file under the key GITHUB_PERSONAL_ACCESS_TOKEN</li>
-    <li>add an endpoint in the ENV file under the key GITHUB_API_ISSUES_ENDPOINT</li>
-    <li>start a MySQL server</li>
-    <li>run php artisan serve</li>
-    <li>open Postman, enter the route URL and send a GET request</li>
+  <li><strong>Prerequisites:</strong> 
+    <ul>
+        <li>Docker Desktop</li>
+        <li>Linux distro installed (or WSL for Windows)</li>
+    </ul>
+  </li>
+  <li><strong>Installation:</strong>
+    <ul>
+      <li>Clone the repository:
+        <pre><code>git clone &lt;repo_url&gt; &lt;project_path&gt;</code></pre>
+      </li>
+      <li>Install dependencies:
+        <pre><code>composer install</code></pre>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Configuration:</strong>
+    <ul>
+      <li>Set Environment Variables:
+        <ul>
+          <li><code>DB_DATABASE</code>: Set to your desired database name (mine was "boopro_assignment")</li>
+          <li><code>DB_USERNAME</code>: Set to "sail"</li>
+          <li><code>DB_PASSWORD</code>: Set to "password"</li>
+          <li><code>GITHUB_PERSONAL_ACCESS_TOKEN</code>: Add your GitHub Access Token</li>
+          <li><code>GITHUB_API_ISSUES_ENDPOINT</code>: Set to <code>https://api.github.com/search/issues</code></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Usage:</strong>
+    <ul>
+      <li>Run the containers:
+        <ul>
+          <li>In PHPStorm terminal, run:
+            <pre><code>bash ./vendor/bin/sail up</code></pre>
+          </li>
+          <li>Or, in PowerShell (WSL):
+            <pre><code>bash ./vendor/bin/sail up -d</code></pre>
+          </li>
+        </ul>
+      </li>
+      <li>After the first time, you can start the containers in Docker Desktop as well</li>
+      <li>From Linux, run migrations:
+        <pre><code>./vendor/bin/sail artisan migrate:fresh --seed</code></pre>
+      </li>
+      <li>Add a new OAuth2 client:
+        <pre><code>./vendor/bin/sail artisan passport:client --client</code></pre>
+      </li>
+      <li>Send your <code>client_id</code> and <code>client_secret</code> in a POST request to the <code>/oauth/token</code> route from Postman to retrieve an access token</li>
+      <li>Include the token in an <code>Authorization:Bearer + {token}</code> header, include a word you wish to search the popularity score for, and send a GET request to <code>/api/score/{word}</code></li>
+    </ul>
+  </li>
 </ul>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
